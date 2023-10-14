@@ -1,0 +1,18 @@
+{
+  "name": "hadashot_bot",
+  "private": true,
+  "scripts": {
+    "start": "npm run build && DOTENV_CONFIG_PATH=/Volumes/keysandtokens/hadashotBot/.env node -r dotenv/config ./dist/main.js",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "axios": "^1.5.1",
+    "dotenv": "^16.3.1",
+    "node-html-parser": "^6.1.10",
+    "node-telegram-bot-api": "^0.63.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.5"
+  }
+}
