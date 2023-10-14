@@ -1,7 +1,5 @@
 # hadashotBot
 
-# Israeli News Telegram Bot
-
 Welcome to the hadashotBot! This bot provides you with the latest news and updates from Israel.
 
 ## Usage Instructions
@@ -27,11 +25,8 @@ If you have any questions, suggestions, or feedback, feel free to reach out to u
 
 ## License
 
-This project is distributed under the [MIT License](./usage_policy.md). You are free to use and modify it in accordance with the terms of the license.
+This project is distributed under the [MIT License](./usage_policy.md).
 
-## Acknowledgments
-
-We would like to express our gratitude to all our users and the community for their support. Without you, this bot would not have been possible!
 
 ## Dependencies
 
