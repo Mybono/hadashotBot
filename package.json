@@ -2,7 +2,7 @@
   "name": "hadashot_bot",
   "private": true,
   "scripts": {
-    "start": "npm run build && node -r dotenv/config ./dist/bot.ts",
+    "start": "node -r dotenv/config ./dist/bot.ts",
     "local": "npm run build && DOTENV_CONFIG_PATH=/Volumes/keysandtokens/hadashotBot/.env node -r dotenv/config ./dist/bot.js",
     "build": "tsc"
   },
