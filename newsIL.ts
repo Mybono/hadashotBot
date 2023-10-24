@@ -1,163 +1,122 @@
-import TelegramBot from 'node-telegram-bot-api';
-import axios from 'axios';
-import { parse } from 'node-html-parser';
-import { Selectors } from './const/selectors';
-import logger from "./helpers/winston";
-import fs from 'fs';
+// import TelegramBot from 'node-telegram-bot-api';
+// import axios from 'axios';
+// import logger from "./helpers/winston";
 
-const token = process.env.TOKEN;
-const chatId = process.env.CHAT_ID;
+// import { parse } from 'node-html-parser';
+// import { Selectors } from './const/selectors';
+// import { Send } from './helpers/message';
 
-const bot = new TelegramBot(token, { polling: true });
-let publishedLastNews: { text: string; href: string }[] = [];
+// const send = new Send()
+// const selectors = Selectors.newsru;
+// const baseUrl = process.env.NEWSRU_IL_BASE_URL;
+// const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// let lastNews = []; 
 
-const NEWSRU_IL = async () => {
-    const baseUrl = process.env.NEWSRU_IL_BASE_URL;
-
-    try {
-        const response = await axios.get(baseUrl);
-        const root = parse(response.data);
-
-        const newsElements = root.querySelectorAll(Selectors.newsru.importantItem);
-
-        for (const element of newsElements) {
-            const text = element.text;
-            const href = element.getAttribute('href');
-            
-            if (!publishedLastNews.some((published) => published.href === href)) {
-                bot.sendMessage(chatId, `<a href="${href}">${text}</a>`, { parse_mode: 'HTML' })
-                .then(() => {
-                        publishedLastNews.push({ text, href });
-                        logger.info(`Sent new news: ${text}`);
-                    })
-                    .catch((error: { code: string; response: { description: string; }; }) => {
-                        if (error.code === 'ETELEGRAM' && error.response && error.response.description === 'Not Found') {
-                            logger.error('Telegram API Error: 404 Not Found');
-                        } else {
-                            logger.error('[scrapeNews] : Error sending message:', error);
-                        }
-                    });
-            }
-        }
-    } catch (error) {
-        logger.error('[scrapeNews] :', error);
-    }
-};
-
-// const QA_NEWS = async () => {
-//     const selectors = Selectors.qaNews;
-//     const baseUrl = "https://habr.com/en/search/?q=qa&target_type=posts&order=date";
-//     const habrBaseUrl = "https://habr.com";
-
+// export const NEWSRU_IL = async (bot: TelegramBot, chatId: any) => {
+//   while (true) {
 //     try {
-//         const response = await axios.get(baseUrl);
-//         const root = parse(response.data);
-//         const newsElements = root.querySelectorAll(selectors.article);
+//       const response = await axios.get(baseUrl);
+//       const root = parse(response.data);
+//       const newsElements = root.querySelectorAll(selectors.article);
 
-//         for (const element of newsElements) {
-//             const linkElement = element.querySelector(selectors.linkElement);
-//             const textElement = element.querySelector(selectors.textElement);
-//             const imgElement = element.querySelector(selectors.imgElement);
+//       const lastThreeNews = newsElements.slice(0, 3);
 
-//             if (linkElement && textElement) {
-//                 const text = textElement.text;
-//                 const href = linkElement.getAttribute('href');
-//                 const fullURL = `${habrBaseUrl}${href}`;
+//       for (const element of lastThreeNews) {
+//         const timestamp = parseInt(element.getAttribute('data-time'), 10);
+//         const href = element.querySelector(selectors.titleAndHref).getAttribute('href');
 
-//                 if (!publishedLastNews.some((published) => published.href === fullURL)) {
-//                     bot.sendMessage(chatId, `<a href="${fullURL}">${text}</a>`, { parse_mode: 'HTML' })
-//                         .then(() => {
-//                             publishedLastNews.push({ text, href: fullURL });
-//                             logger.info(`Sent new news: ${text}`);
-//                         })
-//                         .catch((error: { code: string; response: { description: string; }; }) => {
-//                             if (error.code === 'ETELEGRAM' && error.response && error.response.description === 'Not Found') {
-//                                 logger.error('Telegram API Error: 404 Not Found');
-//                             } else {
-//                                 logger.error('[scrapeNews] : Error sending message:', error);
-//                             }
-//                         });
-//                 }
+//         if (!lastNews.some(news => news.href === href)) {
+//           const anonsElement = element.querySelector(selectors.anons);
+//           const titleAndHrefElement = element.querySelector(selectors.titleAndHref);
+//           const imgElement = element.querySelector(selectors.imgElement);
+
+//           if (anonsElement && titleAndHrefElement) {
+//             const anons = anonsElement.text;
+//             const text = titleAndHrefElement.text;
+//             const message = `<a href="${href}">${text}</a>\n\n${anons}`;
+
+//             if (imgElement) {
+//               const imgURL = imgElement.getAttribute('src');
+//               await send.sendImageMessage(bot, chatId, imgURL, message);
+//               logger.info(`[IL] : ${anons}`);
 //             }
+
+//             lastNews.push({ href, timestamp });
+//           }
 //         }
+//       }
+
+//       if (lastNews.length > 3) {
+//         lastNews = lastNews.slice(lastNews.length - 3);
+//       }
+
+//       await delay(1200000);
+//       lastNews = [];
 //     } catch (error) {
-//         logger.error('[scrapeNews] :', error);
+//       logger.error('[IL_NEWS] :', error);
+//       await delay(2000);
 //     }
+//   }
 // };
 
+import TelegramBot from 'node-telegram-bot-api';
+import axios from 'axios';
+import logger from "./helpers/winston";
+import { parse } from 'node-html-parser';
+import { Selectors } from './const/selectors';
+import { Send } from './helpers/message';
 
+const send = new Send();
+const selectors = Selectors.newsru;
+const baseUrl = process.env.NEWSRU_IL_BASE_URL;
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const QA_NEWS = async () => {
-    const selectors = Selectors.qaNews;
-    const baseUrl = "https://habr.com/en/search/?q=qa&target_type=posts&order=date";
-    const habrBaseUrl = "https://habr.com"; // Убедитесь, что нет закрывающего слеша
-
+export const NEWSRU_IL = async (bot: TelegramBot, chatId: any) => {
+  while (true) {
     try {
-        const response = await axios.get(baseUrl);
-        const root = parse(response.data);
-        const newsElements = root.querySelectorAll(selectors.article);
+      const response = await axios.get(baseUrl);
+      const root = parse(response.data);
+      const newsElements = root.querySelectorAll(selectors.article);
 
-        for (const element of newsElements) {
-            const linkElement = element.querySelector(selectors.linkElement);
-            const textElement = element.querySelector(selectors.textElement);
-            const imgElement = element.querySelector(selectors.imgElement);
+      const oldNews = await send.loadOldNews();
 
-            if (linkElement && textElement) {
-                const text = textElement.text;
-                const href = linkElement.getAttribute('href');
-                const fullURL = `${habrBaseUrl}${href}`;
+      const newNews = newsElements.slice(0, 3).filter(element => {
+        const href = element.querySelector(selectors.titleAndHref).getAttribute('href');
+        return !oldNews.includes(href);
+      });
 
-                if (!publishedLastNews.some((published) => published.href === fullURL)) {
-                    const messageOptions = {
-                        parse_mode: 'HTML',
-                    };
 
-                    if (imgElement) {
-                        const imgURL = imgElement.getAttribute('src');
+      for (const element of newNews) {
+        const timestamp = parseInt(element.getAttribute('data-time'), 10);
+        const href = element.querySelector(selectors.titleAndHref).getAttribute('href');
+        const anonsElement = element.querySelector(selectors.anons);
+        const titleAndHrefElement = element.querySelector(selectors.titleAndHref);
+        const imgElement = element.querySelector(selectors.imgElement);
 
-                        // Отправка изображения и текста в чат
-                        bot.sendPhoto(chatId, imgURL, {
-                            caption: `<a href="${fullURL}">${text}</a>`,
-                            parse_mode: 'HTML'
-                        })
-                        .then(() => {
-                            publishedLastNews.push({ text, href: fullURL });
-                            logger.info(`Sent new news: ${text}`);
-                        })
-                        .catch((error) => {
-                            if (error.code === 'ETELEGRAM' && error.response && error.response.description === 'Not Found') {
-                                logger.error('Telegram API Error: 404 Not Found');
-                            } else {
-                                logger.error('[scrapeNews] : Error sending message:', error);
-                            }
-                        });
-                    } else {
-                        bot.sendMessage(chatId, `<a href="${fullURL}">${text}</a>`, messageOptions)
-                            .then(() => {
-                                publishedLastNews.push({ text, href: fullURL });
-                                logger.info(`Sent new news: ${text}`);
-                            })
-                            .catch((error) => {
-                                if (error.code === 'ETELEGRAM' && error.response && error.response.description === 'Not Found') {
-                                    logger.error('Telegram API Error: 404 Not Found');
-                                } else {
-                                    logger.error('[scrapeNews] : Error sending message:', error);
-                                }
-                            });
-                    }
-                }
-            }
+        if (anonsElement && titleAndHrefElement) {
+          const anons = anonsElement.text;
+          const text = titleAndHrefElement.text;
+          const message = `<a href="${href}">${text}</a>\n\n${anons}`;
+
+          if (imgElement) {
+            const imgURL = imgElement.getAttribute('src');
+            await send.sendImageMessage(bot, chatId, imgURL, message);
+            logger.info(`[IL] : ${anons}`);
+          }
+          await oldNews.push(href);
         }
+      }
+
+      if (newNews.length > 0) {
+        send.saveOldNews(oldNews);
+      }
+
+      await delay(600000);
     } catch (error) {
-        logger.error('[scrapeNews] :', error);
+      logger.error('[IL_NEWS] :', error);
+      await delay(2000);
     }
+  }
 };
 
 
-
-
-
-// NEWSRU_IL();
-QA_NEWS();
-setInterval(NEWSRU_IL, 3600000);
-setInterval(QA_NEWS, 3600000);
